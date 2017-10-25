@@ -1,5 +1,9 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import { Row, Col, Button, ButtonToolbar,
+    ListGroup, ListGroupItem, Well, Form,
+    FormGroup, FormControl, InputGroup,
+    ControlLabel, Label } from 'react-bootstrap';
 
 const quotes = 'https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22YHOO%22%2C%22AAPL%22%2C%22GOOG%22%2C%22MSFT%22)&format=json&diagnostics=true&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=';
 
@@ -47,7 +51,6 @@ class StockList extends Component {
 
     componentDidMount() {
         // Load needed API for stocks
-        // localStorage.getItem('state');
         axios.get(quotes)
             .then((response) => {
                 const stock = response.data.query.results.quote;
@@ -194,57 +197,81 @@ class StockList extends Component {
         const stock = this.state.stock;
 
         return (
-            <div>
+            <Well>
                 <header>
-                    My A$: <b>{
-                        this.state.wallet.toFixed(2)
-                        } </b> |
-                    My Shares: <b>{this.renderShares()}</b> |
-                    Net Total: <b>{this.netTotal().toFixed(2)}</b>
+                    My A$: <Label bsStyle="success">{this.state.wallet.toFixed(2)}</Label> |
+                    My Shares: <Label bsStyle="primary">{this.renderShares()}</Label> |
+                    Net Total: <Label bsStyle="primary">{this.netTotal().toFixed(2)}</Label>
                 </header>
-                <form action="">
-                    <ul>
-                        {stock.map((item, i) => (
-                            <li key={item.symbol}>
-                                <label htmlFor={`qty-${i}`}>
-                                    <span><b>{item.symbol} </b></span>
-                                    <span className="stock-cost">{item.Ask} </span>
-                                    <span className="stock-change">{item.ChangeinPercent}</span>
-                                </label>
-                                <input
-                                    id={`qty-${i}`}
-                                    name={`qty${i}`}
-                                    type="number"
-                                    value={this.getValueBySymbol(item.symbol)}
-                                    placeholder="0"
-                                    min="0"
-                                    data-symbol={item.symbol}
-                                    onChange={this.handleChange}
-                                />
-                                <span className="subtotal">
-                                    {(this.getValueBySymbol(item.symbol) * item.Ask).toFixed(2)}
-                                </span>
-                            </li>
-                        ))}
-                        <h3 className="total">
-                            {`Total: ${this.getTotal().toFixed(2)}` }
-                        </h3>
-                    </ul>
-                    <button onClick={this.handleBuy} id="buy">Buy</button>
-                    <button onClick={this.handleSell} id="sell">Sell</button>
-                </form>
                 <h3>Add cash to my account</h3>
-                <form action="">
-                    <input
-                        id="add-cash-amount"
-                        name="my-cash"
-                        type="number"
-                        placeholder="100"
-                        min="0"
-                    />
-                    <button onClick={this.handleAdd} id="add-cash">Add</button>
-                </form>
-            </div>
+                <Form inline action="">
+                    <FormGroup>
+                        <InputGroup>
+                            <FormControl
+                                id="add-cash-amount"
+                                name="my-cash"
+                                type="number"
+                                placeholder="100"
+                                min="0"
+                            />
+                            <InputGroup.Button>
+                                <Button bsStyle="primary" onClick={this.handleAdd} id="add-cash">Add</Button>
+                            </InputGroup.Button>
+                        </InputGroup>
+                    </FormGroup>
+                </Form>
+                <h3>Stocks data</h3>
+                <Form action="">
+                    <FormGroup>
+                        <ListGroup>
+                            <ListGroupItem>
+                                <Row>
+                                    <Col xs={4}><h5>Stock info</h5></Col>
+                                    <Col xs={4}><h5>Qty</h5></Col>
+                                    <Col xs={4}><h5>Subtotal</h5></Col>
+                                </Row>
+                            </ListGroupItem>
+                            {stock.map((item, i) => (
+                                <ListGroupItem key={item.symbol}>
+                                    <Row>
+                                        <Col xs={4}>
+                                            <ControlLabel htmlFor={`qty-${i}`}>
+                                                <span><b>{item.symbol} </b></span>
+                                                <span className="stock-cost">{item.Ask} </span>
+                                                <span className="stock-change">{item.ChangeinPercent}</span>
+                                            </ControlLabel>
+                                        </Col>
+                                        <Col xs={4}>
+                                            <FormControl
+                                                id={`qty-${i}`}
+                                                name={`qty${i}`}
+                                                type="number"
+                                                value={this.getValueBySymbol(item.symbol)}
+                                                placeholder="0"
+                                                min="0"
+                                                data-symbol={item.symbol}
+                                                onChange={this.handleChange}
+                                            />
+                                        </Col>
+                                        <Col xs={4}>
+                                            <span className="subtotal">
+                                                {(this.getValueBySymbol(item.symbol) * item.Ask).toFixed(2)}
+                                            </span>
+                                        </Col>
+                                    </Row>
+                                </ListGroupItem>
+                        ))}
+                            <h3 className="total">
+                                {`Total: ${this.getTotal().toFixed(2)}` }
+                            </h3>
+                        </ListGroup>
+                    </FormGroup>
+                    <ButtonToolbar>
+                        <Button bsStyle="primary" onClick={this.handleBuy} id="buy">Buy</Button>
+                        <Button bsStyle="success" onClick={this.handleSell} id="sell">Sell</Button>
+                    </ButtonToolbar>
+                </Form>
+            </Well>
         );
     }
 }
