@@ -9,7 +9,8 @@ Welcome to the shares-manager wiki!
 ### For implementing this App I used:
 
 - ReactJS
-- Yahoo’s finance API (to load Stock data)
+- react-bootstrap for fast styling)
+- axios for asynchronous load  Yahoo’s finance API (to load Stock data)
 - localStorage (to save input data after refresh page)
 
 
