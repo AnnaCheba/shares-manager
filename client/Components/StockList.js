@@ -3,38 +3,40 @@ import axios from 'axios';
 
 const quotes = 'https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22YHOO%22%2C%22AAPL%22%2C%22GOOG%22%2C%22MSFT%22)&format=json&diagnostics=true&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=';
 
-
 class StockList extends Component {
     constructor() {
         super();
-
-        this.state = {
-            stock: [
-                {
-                    id: 1,
-                    symbol: 'DOW J',
-                    Ask: '22871.72',
-                    ChangeinPercent: '+30.71',
-                },
-                {
-                    id: 2,
-                    symbol: 'AAPL',
-                    Ask: '156.99',
-                    ChangeinPercent: '+0.99',
-                },
-                {
-                    id: 3,
-                    symbol: 'SBUX',
-                    Ask: '55.72',
-                    ChangeinPercent: '-0.25',
-                },
-            ],
-            qty: {},
-            wallet: 5000,
-            myShares: {
-                AAPL: 3,
-            },
-        };
+        // Using localStorage to store state
+        const cachedStates = localStorage.getItem('state');
+        if (cachedStates) {
+            this.state = JSON.parse(cachedStates);
+        } else {
+            this.state = {
+                stock: [
+                    {
+                        id: 1,
+                        symbol: 'DOW J',
+                        Ask: '22871.72',
+                        ChangeinPercent: '+30.71',
+                    },
+                    {
+                        id: 2,
+                        symbol: 'AAPL',
+                        Ask: '156.99',
+                        ChangeinPercent: '+0.99',
+                    },
+                    {
+                        id: 3,
+                        symbol: 'SBUX',
+                        Ask: '55.72',
+                        ChangeinPercent: '-0.25',
+                    },
+                ],
+                qty: {},
+                wallet: 0,
+                myShares: {},
+            };
+        }
 
         this.handleChange = this.handleChange.bind(this);
         this.handleBuy = this.handleBuy.bind(this);
@@ -45,6 +47,7 @@ class StockList extends Component {
 
     componentDidMount() {
         // Load needed API for stocks
+        // localStorage.getItem('state');
         axios.get(quotes)
             .then((response) => {
                 const stock = response.data.query.results.quote;
@@ -57,11 +60,16 @@ class StockList extends Component {
             });
     }
 
+    componentDidUpdate() {
+        localStorage.setItem('state', JSON.stringify(this.state));
+    }
+
     getValueBySymbol(symbol) {
         const value = this.state.qty[symbol];
         return value || 0;
     }
 
+    // Show total sum when select qty
     getTotal() {
         let total = 0;
         this.state.stock.forEach(
@@ -82,11 +90,12 @@ class StockList extends Component {
         });
     }
 
-    // Update walet, shares on clicking Buy button
+    // When clicking Buy button update myShares and wallet
     handleBuy(e) {
         e.preventDefault();
 
-        if ((this.state.wallet > 0) && (this.state.wallet >= this.getTotal())) {
+        // Check if enougth money to buy
+        if (this.state.wallet >= this.getTotal()) {
             const myNewShare = {
                 ...this.state.myShares,
             };
@@ -115,52 +124,44 @@ class StockList extends Component {
         }
     }
 
-    // Update walet, shares on clicking Sell button
+    // When click sell button update myShares and wallet
     handleSell(e) {
         e.preventDefault();
 
-        if (Object.keys(this.state.myShares).length > 0) {
-            const myNewShare = {
-                ...this.state.myShares,
-            };
+        const myNewShare = {
+            ...this.state.myShares,
+        };
 
-            // Remove qty object from myShares object
-            Object.keys(myNewShare).forEach((key) => {
-                if (this.state.qty[key] && (myNewShare[key] >= this.state.qty[key])) {
-                    myNewShare[key] -= this.state.qty[key];
-                    if (myNewShare[key] === 0) {
-                        delete myNewShare[key];
-                    }
+        // Check if selling shares are exist in myShares
+        Object.keys(this.state.qty).forEach((key) => {
+            if (this.state.qty[key] === 0) { return; }
+            if (myNewShare[key] >= this.state.qty[key]) {
+                myNewShare[key] -= this.state.qty[key];
 
-                    this.setState({
-                        wallet: (this.state.wallet + this.getTotal()),
-                        myShares: myNewShare,
-                        qty: 0,
-                    });
-                } else {
-                    // TODO: check whay it appiers when we
-                    // sell when have more than one different shares
-                    alert('You do not have such to sell');
-
-                    this.setState({
-                        qty: 0,
-                    });
+                if (myNewShare[key] === 0) {
+                    delete myNewShare[key];
                 }
-            });
-        } else {
-            alert('You do not have such to sell');
 
-            this.setState({
-                qty: 0,
-            });
-        }
+                this.setState({
+                    wallet: (this.state.wallet + this.getTotal()),
+                    myShares: myNewShare,
+                    qty: 0,
+                });
+            } else {
+                alert('You do not have such to sell');
+
+                this.setState({
+                    qty: 0,
+                });
+            }
+        });
     }
 
+    // Add cash to account
     handleAdd(e) {
         e.preventDefault();
         this.setState({
             wallet: this.state.wallet + Number(document.getElementById('add-cash-amount').value),
-
         });
     }
 
@@ -174,12 +175,13 @@ class StockList extends Component {
         return myNetTotal;
     }
 
+    // Render myShares on the page
     renderShares() {
         const shares = this.state.myShares;
         let mySharesDOM = '';
         if (Object.keys(this.state.myShares).length > 0) {
-            Object.keys(shares).map(key => (mySharesDOM += `${key} - ${shares[key]};`),
-            );
+            mySharesDOM = Object.keys(shares)
+                .map(key => <span>{`${key} - ${shares[key]}`}; </span>);
         } else {
             mySharesDOM = 0;
         }
@@ -187,24 +189,30 @@ class StockList extends Component {
         return mySharesDOM;
     }
 
+
     render() {
         const stock = this.state.stock;
 
         return (
             <div>
                 <header>
-                    <h3>Net total: {this.netTotal().toFixed(2)}</h3>
-                    My A$: <b>{ this.state.wallet.toFixed(2) } </b> |
-                    My Shares: <b>{this.renderShares()}</b>
+                    My A$: <b>{
+                        this.state.wallet.toFixed(2)
+                        } </b> |
+                    My Shares: <b>{this.renderShares()}</b> |
+                    Net Total: <b>{this.netTotal().toFixed(2)}</b>
                 </header>
                 <form action="">
                     <ul>
                         {stock.map((item, i) => (
                             <li key={item.symbol}>
-                                <span><b>{item.symbol} </b></span>
-                                <span className="stock-cost">{item.Ask} </span>
-                                <span className="stock-change">{item.ChangeinPercent}</span>
+                                <label htmlFor={`qty-${i}`}>
+                                    <span><b>{item.symbol} </b></span>
+                                    <span className="stock-cost">{item.Ask} </span>
+                                    <span className="stock-change">{item.ChangeinPercent}</span>
+                                </label>
                                 <input
+                                    id={`qty-${i}`}
                                     name={`qty${i}`}
                                     type="number"
                                     value={this.getValueBySymbol(item.symbol)}
