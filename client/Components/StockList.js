@@ -237,8 +237,8 @@ class StockList extends Component {
                                         <Col xs={4}>
                                             <ControlLabel htmlFor={`qty-${i}`}>
                                                 <span><b>{item.symbol} </b></span>
-                                                <span className="stock-cost">{item.Ask} </span>
-                                                <span className="stock-change">{item.ChangeinPercent}</span>
+                                                <Label className="stock-cost">{item.Ask}</Label>
+                                                <span className="stock-change"> {item.ChangeinPercent}</span>
                                             </ControlLabel>
                                         </Col>
                                         <Col xs={4}>

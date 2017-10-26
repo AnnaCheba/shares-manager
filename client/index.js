@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { render } from 'react-dom';
 import StockList from './Components/StockList';
 
-class App extends React.Component {
+class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
